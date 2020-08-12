@@ -255,6 +255,16 @@ class AttributeSet(hdf5extension.AttributeSet, object):
         self._v_attrnames.sort()
         self._v_attrnamessys.sort()
         self._v_attrnamesuser.sort()
+        
+        # Dirty hack to undo unintential byteswap when reading little-endian index arrays                                                                                                                                                                              
+        if getattr(self, "CLASS", None) == "INDEX":
+            _file_byteorder = "little"
+            if "byteorder := 'big'" in node._v_file.__repr__():
+                _file_byteorder = "big"
+            if sys.byteorder != _file_byteorder:
+                for attr in self._v_attrnamesuser:
+                    self.__dict__[attr] = getattr(self, attr).byteswap()
+        
 
     def _g_update_node_location(self, node):
         """Updates the location information about the associated `node`."""
